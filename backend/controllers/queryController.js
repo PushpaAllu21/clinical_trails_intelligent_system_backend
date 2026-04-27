@@ -129,6 +129,38 @@ export const queryRAG = async (req, res) => {
 
     const allDocs = await Embedding.find(embeddingQuery);
 
+    // 🚀 STEP 1: Detect empty embeddings → fallback to general LLM
+    if (!allDocs || allDocs.length === 0) {
+      console.log("⚠️ No documents found → switching to general LLM mode");
+
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          {
+            role: "system",
+            content: `
+You are an intelligent AI assistant.
+
+Answer the question using general knowledge.
+Do not say "no data found".
+Provide helpful, clear, and structured answers.
+            `
+          },
+          {
+            role: "user",
+            content: question
+          }
+        ]
+      });
+
+      return res.json({
+        answer: completion.choices[0].message.content,
+        chart: null,
+        sources: [],
+        mode: "general"
+      });
+    }
+
     // 🔹 3. Similarity scoring
     const scored = allDocs.map(doc => ({
       text: doc.text,
@@ -141,16 +173,42 @@ export const queryRAG = async (req, res) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    if (topChunks.length === 0) {
+    // 🚀 STEP 2: Handle "no relevant chunks" → fallback to general LLM
+    const THRESHOLD = 0.3;
+    const filteredChunks = topChunks.filter(c => c.score > THRESHOLD);
+
+    if (filteredChunks.length === 0) {
+      console.log("⚠️ No relevant context → fallback to general AI");
+
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          {
+            role: "system",
+            content: `
+You are an intelligent assistant.
+
+No document context is available.
+Answer using general knowledge.
+            `
+          },
+          {
+            role: "user",
+            content: question
+          }
+        ]
+      });
+
       return res.json({
-        answer: "No relevant information found.",
+        answer: completion.choices[0].message.content,
         chart: null,
-        sources: []
+        sources: [],
+        mode: "general"
       });
     }
 
-    // 🔹 5. Build context
-    const context = topChunks.map(c => c.text).join("\n\n");
+    // 🔹 5. Build context (use filtered chunks for RAG)
+    const context = filteredChunks.map(c => c.text).join("\n\n");
 
     // 🔹 6. LLM Call (UPDATED PROMPT)
     const completion = await groq.chat.completions.create({
@@ -359,9 +417,10 @@ ABSOLUTE RULES (MUST FOLLOW):
     res.json({
       answer: parsed.markdown,
       chart: parsed.chart,
-      sources: topChunks,
+      sources: filteredChunks,
       sessionId: sessionId,
-      chat: chatResponse
+      chat: chatResponse,
+      mode: "rag"
     });
 
   } catch (err) {
