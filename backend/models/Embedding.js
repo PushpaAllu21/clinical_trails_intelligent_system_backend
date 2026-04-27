@@ -6,8 +6,6 @@ const embeddingSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
-  trial_id: String,
-  document_type: String,
   section: String,
   text: String,
   embedding: Array

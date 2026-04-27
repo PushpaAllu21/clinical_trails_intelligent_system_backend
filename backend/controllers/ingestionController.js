@@ -66,12 +66,10 @@ const convertToText = (rows) => {
 
 
 // 🚀 MAIN INGEST LOGIC
-export const ingestDocumentFromSource = async ({ filePath, trial_id, document_type, userId }) => {
+export const ingestDocumentFromSource = async ({ filePath, userId }) => {
   console.log("\n========== 🔄 INGESTION STARTED ==========");
   console.log("🔄 Processing ingest from source:");
   console.log("   filePath:", filePath);
-  console.log("   trial_id:", trial_id);
-  console.log("   document_type:", document_type);
   console.log("   userId:", userId);
 
   if (!filePath) {
@@ -199,8 +197,6 @@ export const ingestDocumentFromSource = async ({ filePath, trial_id, document_ty
 
       docs.push({
         userId,
-        trial_id,
-        document_type,
         section: "general",
         text: chunk,
         embedding,

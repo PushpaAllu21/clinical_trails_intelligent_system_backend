@@ -9,16 +9,11 @@ export const uploadFile = async (req, res) => {
     console.log("\n========== 📤 UPLOAD STARTED ==========");
     const userId = req.user?.id;
     const file = req.file;
-    const { trial_id, document_type, version } = req.body;
-
     console.log("📋 Request details:");
     console.log("   - userId:", userId);
     console.log("   - fileName:", file?.originalname);
     console.log("   - fileSize:", file?.size, "bytes");
     console.log("   - mimeType:", file?.mimetype);
-    console.log("   - trial_id:", trial_id);
-    console.log("   - document_type:", document_type);
-    console.log("   - version:", version);
 
     if (!userId) {
       console.log("❌ ERROR: Authentication required");
@@ -72,17 +67,12 @@ export const uploadFile = async (req, res) => {
     console.log("💾 Saving metadata to MongoDB (trails_metadata collection)...");
     const doc = await Document.create({
       userId,
-      trial_id,
-      document_type,
-      version,
       file_path: fileUrl,
     });
 
     console.log("✅ Document metadata saved to MongoDB:");
     console.log("   - _id:", doc._id);
     console.log("   - userId:", doc.userId);
-    console.log("   - trial_id:", doc.trial_id);
-    console.log("   - document_type:", doc.document_type);
     console.log("   - file_path:", doc.file_path);
     console.log("   - createdAt:", doc.createdAt);
 
@@ -91,8 +81,6 @@ export const uploadFile = async (req, res) => {
     try {
       await ingestDocumentFromSource({
         filePath: fileUrl,
-        trial_id,
-        document_type,
         userId
       });
       console.log("✅ Immediate ingestion completed successfully");
@@ -105,14 +93,12 @@ export const uploadFile = async (req, res) => {
     // ✅ Send fileType to n8n (optional, for other processing)
     const n8nWebhookUrl = `https://${process.env.N8N_DOMAIN_URL}/webhook/ingest-doc`;
     console.log("\n📡 Sending webhook to n8n:", n8nWebhookUrl);
-    console.log("📡 Webhook payload:", { filePath: fileUrl, trial_id, document_type, userId, fileType: ext });
+    console.log("📡 Webhook payload:", { filePath: fileUrl, userId, fileType: ext });
 
     axios.post(
       n8nWebhookUrl,
       {
         filePath: fileUrl,
-        trial_id,
-        document_type,
         userId,
         fileType: ext
       },

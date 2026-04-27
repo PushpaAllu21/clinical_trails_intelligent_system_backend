@@ -164,7 +164,6 @@ Provide helpful, clear, and structured answers.
     // 🔹 3. Similarity scoring
     const scored = allDocs.map(doc => ({
       text: doc.text,
-      trial_id: doc.trial_id,
       score: cosineSimilarity(queryEmbedding, doc.embedding)
     }));
 
@@ -244,7 +243,7 @@ ${question}
 YOUR RESPONSE MUST BE EXACTLY THIS FORMAT:
 
 {
-  "markdown": "## 🧠 Summary\\n...\\n\\n## 📄 Detailed Explanation\\n...\\n\\n## 📌 Key Insights\\n- ...\\n- ...\\n\\n## 📊 Data Interpretation\\n...\\n\\n## 📚 Sources\\n- trial_id: ...",
+  "markdown": "## 🧠 Summary\\n...\\n\\n## 📄 Detailed Explanation\\n...\\n\\n## 📌 Key Insights\\n- ...\\n- ...\\n\\n## 📊 Data Interpretation\\n...\\n\\n## 📚 Sources\\n- source: ...",
   "chart": {
     "type": "bar",
     "title": "Chart Title",

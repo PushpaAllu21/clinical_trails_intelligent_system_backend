@@ -7,9 +7,6 @@ const documentSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
-    trial_id: String,
-    document_type: String,
-    version: String,
     file_path: String
   },
   { timestamps: true }
