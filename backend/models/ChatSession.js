@@ -5,6 +5,7 @@ const messageSchema = new mongoose.Schema({
   type: String, // user | bot
   text: String,
   chart: Object,
+  mode: { type: String, enum: ["rag", "general"], default: null }, // tracks if bot msg came from RAG or general LLM
   createdAt: { type: Date, default: Date.now }
 });
 
